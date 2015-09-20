@@ -4,13 +4,14 @@ import matplotlib.pyplot as plt
 import sys
 import os
 import pafy
-#from textblob import Textblob
-import subprocess
+import json
 
 if len(sys.argv) != 2:
     print "Usage: python test.py http://youtube.com/watch?v=XXXXXXXX"
 
 caffe_root = '/home/erik/caffe/'
+
+json_data = {}
 
 def getSec(s):
     l = s.split(':')
@@ -20,16 +21,31 @@ def getSec(s):
 url = sys.argv[1]
 video = pafy.new(url)
 
+author = video.author
+title = video.title
+
+json_data['title'] = title
+json_data['author'] = author
+json_data['url'] = url
+
 duration = getSec(video.duration)
 print "duration: ", duration
 
+json_data['duration'] = duration
+
 likes = video.likes
+json_data['likes'] = likes
 views = video.viewcount
+json_data['views'] = views
 dislikes = video.dislikes
+json_data['dislikes'] = dislikes
 count = float(likes) + float(dislikes)
+json_data['count'] = count
 
 approval = float(likes) / count
 vote_perc = count / float(views)
+json_data['approval'] = approval
+json_data['vote_precent'] = vote_perc
 
 # Download video
 os.system("youtube-dl -o 'output' " + url)
@@ -71,6 +87,7 @@ net = caffe.Classifier(MODEL_FILE, PRETRAINED,
         raw_scale=255,
         image_dims=(256, 256))
 
+#image_labels = []
 frame_info = {}
 total = 0
 for image in os.listdir(os.getcwd()):
@@ -102,6 +119,7 @@ for image in os.listdir(os.getcwd()):
 
 #print image_labels
 
+json_data['frame_info'] = frame_info
 largest = 1
 label_largest = ''
 secLargest = 0
@@ -131,12 +149,26 @@ print 'Video description: ', description
 print 'Video keywords: ', keywords
 print "Mix: ", mix
 
+json_data['most_common'] = label_largest
+json_data['category'] = category
+json_data['description'] = description
+json_data['keywords'] = keywords
+json_data['mix'] = mix
 
+sys.path.insert(0, '/home/erik/TextBlob/')
+
+import Textblob 
+
+words = Textblob(description)
+sentiment = words.sentiment
+json_data['sentiment_of_description'] = sentiment
+
+
+# database stuff
 
 frame_info[label_largest].sort()
 
 val = 0.
-
 axes = plt.gca()
 axes.set_xlim(0, duration)
 
