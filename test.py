@@ -5,6 +5,7 @@ import sys
 import os
 import pafy
 import json
+from pymongo import MongoClient
 
 if len(sys.argv) != 2:
     print "Usage: python test.py http://youtube.com/watch?v=XXXXXXXX"
@@ -117,7 +118,7 @@ for image in os.listdir(os.getcwd()):
             print "IMAGE_LABEL:", labels[prediction[0].argmax()] 
             total += 1
 
-#print image_labels
+print frame_info
 
 json_data['frame_info'] = frame_info
 largest = 1
@@ -147,27 +148,31 @@ print 'Percent of people who voted, given they watched the video: ', vote_perc *
 print 'Video Category: ', category
 print 'Video description: ', description
 print 'Video keywords: ', keywords
-print "Mix: ", mix
 
 json_data['most_common'] = label_largest
 json_data['category'] = category
 json_data['description'] = description
 json_data['keywords'] = keywords
-json_data['mix'] = mix
+
+'''
+"https://torid-torch-3448.firebaseio.com/"
 
 sys.path.insert(0, '/home/erik/TextBlob/')
 
-import Textblob 
+_description = TextBlobs(description)
+sentiment = _description.sentiment
+'''
 
-words = Textblob(description)
-sentiment = words.sentiment
-json_data['sentiment_of_description'] = sentiment
-
-
+client = MongoClient("trump6.com", 27017)
+client.yakdb.authenticate('yakuser', 'yaks')
+db = client.yakdb
+collection = db.erik
+collection.insert(json_data)
 # database stuff
 
 frame_info[label_largest].sort()
 
+'''
 val = 0.
 axes = plt.gca()
 axes.set_xlim(0, duration)
@@ -177,6 +182,7 @@ fig.suptitle(label_largest, fontsize=20)
 plt.plot(frame_info[label_largest], np.zeros_like(frame_info[label_largest]) + val, 'x')
 
 plt.show()
+'''
 
 os.system("rm -f image-0*")
 os.system("rm  output*")
